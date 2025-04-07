@@ -1,10 +1,15 @@
 package hu.u_szeged.inf.sed.fog;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.jenetics.*;
-import io.jenetics.engine.Engine;
-import io.jenetics.engine.EvolutionResult;
-import io.jenetics.util.Factory;
+import io.jenetics.DoubleGene;
+import io.jenetics.MeanAlterer;
+import io.jenetics.Mutator;
+import io.jenetics.TournamentSelector;
+import io.jenetics.engine.*;
+import io.jenetics.stat.DoubleMomentStatistics;
+import io.jenetics.util.DoubleRange;
+import io.jenetics.util.ISeq;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -12,12 +17,13 @@ import java.util.Map;
 
 
 public class GeneticPliantOptimiser {
+    static final Gson gson = new Gson();
 
-    private  static  double normalizeCost(double price){
+    private static double normalizeCost(double price) {
         return (price - 15) / 10;
     }
 
-    public static double fitness(final Genotype<DoubleGene> entity){
+    public static double fitness(SigmoidParams entity) {
         double totalCost = Integer.MAX_VALUE;
         double energy = Integer.MAX_VALUE;
         double simLength = Integer.MAX_VALUE;
@@ -28,15 +34,14 @@ public class GeneticPliantOptimiser {
                     "dissect-cf-fog-1.0.0-SNAPSHOT-jar-with-dependencies.jar",
                     "hu.u_szeged.inf.fog.simulator.demo.IoTSimulation",
                     "LPDS_original.xml",
-                    Double.toString(entity.get(0).gene().allele()),
-                    Double.toString(entity.get(1).gene().allele()),
-//                    "null",
-//                    "null",
-                    Double.toString(entity.get(2).gene().allele()),
-                    Double.toString(entity.get(3).gene().allele()),
-                    Double.toString(entity.get(4).gene().allele()),
-                    Double.toString(entity.get(5).gene().allele())
-                    )
+                    gson.toJson(entity)
+                    // Double.toString(entity.priceLambda()),
+                    // Double.toString(entity.priceShift()),
+                    // Double.toString(entity.loadOfResourceLambda()),
+                    // Double.toString(entity.loadOfResourceShift()),
+                    // Double.toString(entity.unprocessedDataLamdba()),
+                    // Double.toString(entity.unprocessedDataShift())
+            )
                     .directory(new File("src/main/resources"))
                     .start();
 
@@ -45,53 +50,62 @@ public class GeneticPliantOptimiser {
             // get output of program az string
             String text = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
+            System.out.println(text);
             // get last line of output
             var split_text = text.split("\n");
-            var object = split_text[split_text.length-1];
+            var object = split_text[split_text.length - 1];
 
             // convert last line of output to a *very* generic map
-            TypeToken<Map<Object, Object>> mapType = new TypeToken<>(){};
+            TypeToken<Map<Object, Object>> mapType = new TypeToken<>() {
+            };
             Map<Object, Object> objectObjectMap = new Gson().fromJson(object, mapType);
 
             // extract fitness from output
             totalCost = (double) ((Map<Object, Object>) objectObjectMap.get("cost")).get("totalCost");
-            energy= (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("totalEnergyConsumptionOfDevicesInWatt");
-            simLength= (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("simulationLength");
+            energy = (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("totalEnergyConsumptionOfDevicesInWatt");
+            simLength = (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("simulationLength");
 
             // wait for the process to finish
             process.waitFor();
 
-            System.out.printf("%s -> %.4f, %.4f, %.4f\n",   entity.toString() , totalCost,energy,simLength);
-        }catch (Exception e) {
+            System.out.printf("%s -> %.4f, %.4f, %.4f\n", entity.toString(), totalCost, energy, simLength);
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return normalizeCost(totalCost)+normalizeEnergy(energy)+normalizeSimLength(simLength);
+        return normalizeCost(totalCost) + normalizeEnergy(energy) + normalizeSimLength(simLength);
 //        return simLength;
 
     }
 
     private static double normalizeSimLength(double simLength) {
-        return (simLength -670) / (800 - 670);
+        return (simLength - 670) / (800 - 670);
     }
 
     private static double normalizeEnergy(double energy) {
-        return (energy - 0.2)/(0.4-0.2);
+        return (energy - 0.2) / (0.4 - 0.2);
     }
 
-    public static void evolution(){
-        Factory<Genotype<DoubleGene>> factory = Genotype.of(
-                DoubleChromosome.of(0, 30),
-                DoubleChromosome.of(1, 50),
-                DoubleChromosome.of(-20, -0.2),
-                DoubleChromosome.of(10, 1000),
-                DoubleChromosome.of(-20, -0.2),
-                DoubleChromosome.of(10, 1000)
+
+    public static void evolution() {
+        final Codec<SigmoidParams, DoubleGene> codec = Codec.combine(
+                ISeq.of(
+                        Codecs.ofScalar(DoubleRange.of(-5, 5)),
+                        Codecs.ofScalar(DoubleRange.of(1, 50)),
+                        Codecs.ofScalar(DoubleRange.of(-5, 5)),
+                        Codecs.ofScalar(DoubleRange.of(10, 100)),
+                        Codecs.ofScalar(DoubleRange.of(-5, 5)),
+                        Codecs.ofScalar(DoubleRange.of(10, 100))
+                ), objects -> new SigmoidParams(
+                        (Math.pow(2, Math.floor((double) objects[0]))),
+                        (double) objects[1],
+                        -1 * (Math.pow(2, Math.floor((double) objects[2]))),
+                        (double) objects[3],
+                        -1 * (Math.pow(2, Math.floor((double) objects[4]))),
+                        (double) objects[5]
+                )
         );
-        System.out.println(factory);
-
-
-        final Engine<DoubleGene, Double> engine = Engine.builder(GeneticPliantOptimiser::fitness, factory)
-                .populationSize(10)
+        final Engine<DoubleGene, Double> engine = Engine.builder(GeneticPliantOptimiser::fitness, codec)
+                .populationSize(5)
                 .survivorsSelector(new TournamentSelector<>(4))
                 .offspringSelector(new TournamentSelector<>(5))
                 .alterers(
@@ -101,10 +115,13 @@ public class GeneticPliantOptimiser {
 //                .executor(Executors.newSingleThreadExecutor()) // to execute all the fitness functions on the main thread
                 .minimizing()
                 .build();
+        EvolutionStatistics<Double, DoubleMomentStatistics> statistics = EvolutionStatistics.ofNumber();
         var result = engine
                 .stream()
-                .limit(20)
+                // .peek(statistics)
+                // .peek(e -> System.out.println(statistics))
+                .limit(10)
                 .collect(EvolutionResult.toBestPhenotype());
-        System.out.println("Res: "+ result);
+        System.out.println("Res: " + result);
     }
 }
