@@ -13,34 +13,28 @@ import io.jenetics.util.ISeq;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 
 public class GeneticPliantOptimiser {
     static final Gson gson = new Gson();
+    static final List<Object> SIMULATOR_CONFIG = List.of("LPDS_original.xml");
 
-    private static double normalizeCost(double price) {
-        return (price - 15) / 10;
-    }
 
-    public static double fitness(SigmoidParams entity) {
+    public static FitnessWrapper fitness(SigmoidParams entity) {
         double totalCost = Integer.MAX_VALUE;
         double energy = Integer.MAX_VALUE;
         double simLength = Integer.MAX_VALUE;
         try {
+
             Process process = new ProcessBuilder(
                     "java",
                     "-cp",
                     "dissect-cf-fog-1.0.0-SNAPSHOT-jar-with-dependencies.jar",
                     "hu.u_szeged.inf.fog.simulator.demo.IoTSimulation",
-                    "LPDS_original.xml",
+                    gson.toJson(SIMULATOR_CONFIG),
                     gson.toJson(entity)
-                    // Double.toString(entity.priceLambda()),
-                    // Double.toString(entity.priceShift()),
-                    // Double.toString(entity.loadOfResourceLambda()),
-                    // Double.toString(entity.loadOfResourceShift()),
-                    // Double.toString(entity.unprocessedDataLamdba()),
-                    // Double.toString(entity.unprocessedDataShift())
             )
                     .directory(new File("src/main/resources"))
                     .start();
@@ -50,7 +44,7 @@ public class GeneticPliantOptimiser {
             // get output of program az string
             String text = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
-            System.out.println(text);
+//            System.out.println(text);
             // get last line of output
             var split_text = text.split("\n");
             var object = split_text[split_text.length - 1];
@@ -72,17 +66,7 @@ public class GeneticPliantOptimiser {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return normalizeCost(totalCost) + normalizeEnergy(energy) + normalizeSimLength(simLength);
-//        return simLength;
-
-    }
-
-    private static double normalizeSimLength(double simLength) {
-        return (simLength - 670) / (800 - 670);
-    }
-
-    private static double normalizeEnergy(double energy) {
-        return (energy - 0.2) / (0.4 - 0.2);
+        return new FitnessWrapper(totalCost, energy, simLength);
     }
 
 
@@ -104,7 +88,7 @@ public class GeneticPliantOptimiser {
                         (double) objects[5]
                 )
         );
-        final Engine<DoubleGene, Double> engine = Engine.builder(GeneticPliantOptimiser::fitness, codec)
+        final Engine<DoubleGene, FitnessWrapper> engine = Engine.builder(GeneticPliantOptimiser::fitness, codec)
                 .populationSize(5)
                 .survivorsSelector(new TournamentSelector<>(4))
                 .offspringSelector(new TournamentSelector<>(5))
@@ -122,6 +106,8 @@ public class GeneticPliantOptimiser {
                 // .peek(e -> System.out.println(statistics))
                 .limit(10)
                 .collect(EvolutionResult.toBestPhenotype());
-        System.out.println("Res: " + result);
+        System.out.println(codec.decode(result.genotype()));
+        System.out.println(result.fitness());
+
     }
 }
