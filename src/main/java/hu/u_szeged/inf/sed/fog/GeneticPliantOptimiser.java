@@ -6,17 +6,18 @@ import io.jenetics.DoubleGene;
 import io.jenetics.MeanAlterer;
 import io.jenetics.Mutator;
 import io.jenetics.TournamentSelector;
-import io.jenetics.engine.*;
+import io.jenetics.engine.Codec;
+import io.jenetics.engine.Codecs;
+import io.jenetics.engine.Engine;
+import io.jenetics.engine.EvolutionResult;
 import io.jenetics.util.DoubleRange;
 import io.jenetics.util.ISeq;
-import io.jenetics.util.RandomRegistry;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
@@ -161,20 +162,21 @@ public class GeneticPliantOptimiser {
                         new Mutator<>(0.2),
                         new MeanAlterer<>(0.2)
                 )
-                .executor(Runnable::run) // to execute all the fitness functions on the main thread
+//                .executor(Runnable::run) // to execute all the fitness functions on the main thread
                 .minimizing()
                 .build();
 //        EvolutionStatistics<FitnessWrapper, MinMax<FitnessWrapper>> statistics = EvolutionStatistics.ofComparable();
         long startTime = System.nanoTime();
         var result =
-                RandomRegistry.with(new Random(4444816),
-                        r ->
-                                engine.stream()
-                                        .limit(Limits.bySteadyFitness(15))
-                                        .peek(GeneticPliantOptimiser::statistics)
-                                        .limit(50)
-                                        .collect(EvolutionResult.toBestPhenotype())
-                );
+//                RandomRegistry.with(new Random(4444816),
+//                        r ->
+                engine.stream()
+//                        .limit(Limits.bySteadyFitness(15))
+                        .peek(GeneticPliantOptimiser::statistics)
+                        .limit(30)
+                        .collect(EvolutionResult.toBestPhenotype())
+//                )
+                ;
         System.out.println("Result parameters: " + codec.decode(result.genotype()));
         System.out.println("Result fitness: " + result.fitness());
         long endTime = System.nanoTime();
