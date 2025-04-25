@@ -2,10 +2,7 @@ package hu.u_szeged.inf.sed.fog;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import io.jenetics.DoubleGene;
-import io.jenetics.GaussianMutator;
-import io.jenetics.MeanAlterer;
-import io.jenetics.TournamentSelector;
+import io.jenetics.*;
 import io.jenetics.engine.*;
 import io.jenetics.util.DoubleRange;
 import io.jenetics.util.ISeq;
@@ -154,9 +151,9 @@ public class GeneticPliantOptimiser {
         );
         final Engine<DoubleGene, FitnessWrapper> engine = Engine.builder(GeneticPliantOptimiser::fitness, codec)
                 .populationSize(30)
-//                .survivorsSelector(new EliteSelector<>(10))
-//                .offspringSelector(new TournamentSelector<>(4))
-                .selector(new TournamentSelector<>(4))
+                .survivorsSelector(new EliteSelector<>(10))
+                .offspringSelector(new TournamentSelector<>(4))
+//                .selector(new TournamentSelector<>(4))
                 .alterers(
                         new GaussianMutator<>(0.2),
                         new MeanAlterer<>(0.2)
@@ -183,10 +180,10 @@ public class GeneticPliantOptimiser {
         System.out.println("Best fitnesses over generations: " + fitnessBest);
         System.out.println("Mean fitnesses over generations: " + fitnessMean);
 
-        save_to_csv(fitnessBest, "fitness_best_truncation");
-        save_to_csv(fitnessMean, "fitness_mean_truncation");
+        save_to_csv(fitnessBest, "elite_fitness_best");
+        save_to_csv(fitnessMean, "elite_fitness_mean");
 
-        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "truncation_res" + ".csv")) {
+        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "elite_res" + ".csv")) {
             fw.write(codec.decode(result.genotype()).toString());
             fw.append("\n");
             fw.append(result.fitness().toString()).append("\n");
