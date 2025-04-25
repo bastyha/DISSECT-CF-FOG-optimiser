@@ -3,8 +3,8 @@ package hu.u_szeged.inf.sed.fog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.jenetics.DoubleGene;
+import io.jenetics.GaussianMutator;
 import io.jenetics.MeanAlterer;
-import io.jenetics.Mutator;
 import io.jenetics.TournamentSelector;
 import io.jenetics.engine.*;
 import io.jenetics.util.DoubleRange;
@@ -158,7 +158,7 @@ public class GeneticPliantOptimiser {
 //                .offspringSelector(new TournamentSelector<>(4))
                 .selector(new TournamentSelector<>(4))
                 .alterers(
-                        new Mutator<>(0.2),
+                        new GaussianMutator<>(0.2),
                         new MeanAlterer<>(0.2)
                 )
                 .executor(Runnable::run) // to execute all the fitness functions on the main thread
