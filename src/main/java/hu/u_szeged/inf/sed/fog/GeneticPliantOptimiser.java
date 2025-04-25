@@ -185,10 +185,10 @@ public class GeneticPliantOptimiser {
         System.out.println("Best fitnesses over generations: " + fitnessBest);
         System.out.println("Mean fitnesses over generations: " + fitnessMean);
 
-        save_to_csv(fitnessBest, "fitness_best_truncation");
-        save_to_csv(fitnessMean, "fitness_mean_truncation");
+        save_to_csv(fitnessBest, "test_fitness_best");
+        save_to_csv(fitnessMean, "test_fitness_mean");
 
-        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "truncation_res" + ".csv")) {
+        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "test_res" + ".csv")) {
             fw.write(codec.decode(result.genotype()).toString());
             fw.append("\n");
             fw.append(result.fitness().toString()).append("\n");
