@@ -3,8 +3,8 @@ package hu.u_szeged.inf.sed.fog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.jenetics.DoubleGene;
+import io.jenetics.GaussianMutator;
 import io.jenetics.MeanAlterer;
-import io.jenetics.Mutator;
 import io.jenetics.TournamentSelector;
 import io.jenetics.engine.Codec;
 import io.jenetics.engine.Codecs;
@@ -12,12 +12,14 @@ import io.jenetics.engine.Engine;
 import io.jenetics.engine.EvolutionResult;
 import io.jenetics.util.DoubleRange;
 import io.jenetics.util.ISeq;
+import io.jenetics.util.RandomRegistry;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 
@@ -159,24 +161,23 @@ public class GeneticPliantOptimiser {
 //                .offspringSelector(new TournamentSelector<>(4))
                 .selector(new TournamentSelector<>(4))
                 .alterers(
-                        new Mutator<>(0.2),
+                        new GaussianMutator<>(0.2),
                         new MeanAlterer<>(0.2)
                 )
-//                .executor(Runnable::run) // to execute all the fitness functions on the main thread
+                .executor(Runnable::run) // to execute all the fitness functions on the main thread
                 .minimizing()
                 .build();
 //        EvolutionStatistics<FitnessWrapper, MinMax<FitnessWrapper>> statistics = EvolutionStatistics.ofComparable();
         long startTime = System.nanoTime();
         var result =
-//                RandomRegistry.with(new Random(4444816),
-//                        r ->
-                engine.stream()
+                RandomRegistry.with(new Random(4444816),
+                        r ->
+                                engine.stream()
 //                        .limit(Limits.bySteadyFitness(15))
-                        .peek(GeneticPliantOptimiser::statistics)
-                        .limit(30)
-                        .collect(EvolutionResult.toBestPhenotype())
-//                )
-                ;
+                                        .peek(GeneticPliantOptimiser::statistics)
+                                        .limit(30)
+                                        .collect(EvolutionResult.toBestPhenotype())
+                );
         System.out.println("Result parameters: " + codec.decode(result.genotype()));
         System.out.println("Result fitness: " + result.fitness());
         long endTime = System.nanoTime();
@@ -185,10 +186,10 @@ public class GeneticPliantOptimiser {
         System.out.println("Best fitnesses over generations: " + fitnessBest);
         System.out.println("Mean fitnesses over generations: " + fitnessMean);
 
-        save_to_csv(fitnessBest, "test_fitness_best");
-        save_to_csv(fitnessMean, "test_fitness_mean");
+        save_to_csv(fitnessBest, "test_r3_fitness_best");
+        save_to_csv(fitnessMean, "test_r3_fitness_mean");
 
-        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "test_res" + ".csv")) {
+        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "test_r3_res" + ".csv")) {
             fw.write(codec.decode(result.genotype()).toString());
             fw.append("\n");
             fw.append(result.fitness().toString()).append("\n");
