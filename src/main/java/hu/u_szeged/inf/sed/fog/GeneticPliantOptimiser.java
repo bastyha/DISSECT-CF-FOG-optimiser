@@ -3,9 +3,9 @@ package hu.u_szeged.inf.sed.fog;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.jenetics.DoubleGene;
-import io.jenetics.LinearRankSelector;
 import io.jenetics.MeanAlterer;
 import io.jenetics.Mutator;
+import io.jenetics.TournamentSelector;
 import io.jenetics.engine.*;
 import io.jenetics.util.DoubleRange;
 import io.jenetics.util.ISeq;
@@ -26,11 +26,14 @@ public class GeneticPliantOptimiser {
     static final List<Object> SIMULATOR_CONFIG = List.of("LPDS_original.xml");
     static final Vector<FitnessWrapper> fitnessMean = new Vector<>();
     static final Vector<FitnessWrapper> fitnessBest = new Vector<>();
+//    static final FitnessWrapper maxFitness = new FitnessWrapper(0.0, 0.0, 0.0);
+//    static final FitnessWrapper minFitness = new FitnessWrapper(Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
 
     public static FitnessWrapper fitness(SigmoidParams entity) {
         double totalCost = Integer.MAX_VALUE;
         double energy = Integer.MAX_VALUE;
         double simLength = Integer.MAX_VALUE;
+        FitnessWrapper res = null;
         try {
 
             Process process = new ProcessBuilder(
@@ -45,10 +48,11 @@ public class GeneticPliantOptimiser {
                     .start();
 
             // if i don't read the error stream, the application won't run
-            String error = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+            process.getErrorStream().readAllBytes();
 //            System.out.println(error);
             // wait for the process to finish
             process.waitFor();
+            Thread.sleep(100);
             // get output of program az string
             String text = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
 
@@ -74,24 +78,28 @@ public class GeneticPliantOptimiser {
             energy = (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("totalEnergyConsumptionOfDevicesInWatt");
             simLength = (double) ((Map<Object, Object>) objectObjectMap.get("architecture")).get("simulationLength");
 
-
-            System.out.printf("%s -> %.4f, %.4f, %.4f\n", entity.toString(), totalCost, energy, simLength);
+            res = new FitnessWrapper(totalCost, energy, simLength);
+            System.out.println(entity);
+            System.out.println(res);
+            System.out.println();
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new FitnessWrapper(totalCost, energy, simLength);
+        if (res == null) {
+            res = new FitnessWrapper(totalCost, energy, simLength);
+        }
+        return res;
     }
 
     public static void save_to_csv(Vector<FitnessWrapper> what, String filename) {
         try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + filename + ".csv")) {
-            fw.write("totalCost, energy, simLength, fitness\n");
+            fw.write("totalCost; energy; simLength; fitness\n");
             for (FitnessWrapper fitnessWrapper : what)
-                fw.append(String.format("%15.05f, %15.05f, %15.05f, %15.05f\n", fitnessWrapper.totalCost,
+                fw.append(String.format("%15.05f; %15.05f; %15.05f; %15.05f\n", fitnessWrapper.totalCost,
                         fitnessWrapper.energy,
                         fitnessWrapper.simLength,
                         fitnessWrapper.fitness
                 ));
-
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -109,6 +117,14 @@ public class GeneticPliantOptimiser {
                 mean.energy += i.fitness().energy;
                 mean.simLength += i.fitness().simLength;
                 mean.fitness += i.fitness().fitness;
+
+//                minFitness.totalCost = Double.min(minFitness.totalCost, i.fitness().totalCost);
+//                minFitness.energy = Double.min(minFitness.energy, i.fitness().energy);
+//                minFitness.simLength = Double.min(minFitness.simLength, i.fitness().simLength);
+//
+//                maxFitness.totalCost = Double.max(maxFitness.totalCost, i.fitness().totalCost);
+//                maxFitness.energy = Double.max(maxFitness.energy, i.fitness().energy);
+//                maxFitness.simLength = Double.max(maxFitness.simLength, i.fitness().simLength);
             }
         }
         mean.totalCost /= result.population().size();
@@ -122,11 +138,11 @@ public class GeneticPliantOptimiser {
         final Codec<SigmoidParams, DoubleGene> codec = Codec.combine(
                 ISeq.of(
                         Codecs.ofScalar(DoubleRange.of(-5, 5)), // priceLambda
-                        Codecs.ofScalar(DoubleRange.of(0, 10)), // priceShift
+                        Codecs.ofScalar(DoubleRange.of(0, 8)), // priceShift
                         Codecs.ofScalar(DoubleRange.of(-5, 5)), // loadOfResLambda
-                        Codecs.ofScalar(DoubleRange.of(10, 300)), // loadOfResShift
+                        Codecs.ofScalar(DoubleRange.of(8, 200)), // loadOfResShift
                         Codecs.ofScalar(DoubleRange.of(-5, 5)), // unprocessedLambda
-                        Codecs.ofScalar(DoubleRange.of(1, 10)) // unprocessedShift
+                        Codecs.ofScalar(DoubleRange.of(0, 27_000)) // unprocessedShift
                 ), objects -> new SigmoidParams(
                         (Math.pow(2, Math.floor((double) objects[0]))),
                         (double) objects[1],
@@ -140,7 +156,7 @@ public class GeneticPliantOptimiser {
                 .populationSize(30)
 //                .survivorsSelector(new EliteSelector<>(10))
 //                .offspringSelector(new TournamentSelector<>(4))
-                .selector(new LinearRankSelector<>())
+                .selector(new TournamentSelector<>(4))
                 .alterers(
                         new Mutator<>(0.2),
                         new MeanAlterer<>(0.2)
@@ -180,5 +196,8 @@ public class GeneticPliantOptimiser {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+//        System.out.println("MaxFitnessThings: " + maxFitness);
+//        System.out.println("MinFitnessThings: " + minFitness);
     }
 }

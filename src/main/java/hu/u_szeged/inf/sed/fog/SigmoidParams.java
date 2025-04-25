@@ -10,14 +10,14 @@ public record SigmoidParams(
 ) {
     @Override
     public String toString() {
-        return String.format("SigmoidParams[\n" +
-                        "\tpriceLambda=%.05f,\n" +
-                        "\tpriceShift=%.05f,\n" +
-                        "\tloadOfResourceLambda=%.05f,\n" +
-                        "\tloadOfResourceShift=%.05f,\n" +
-                        "\tunprocessedDataLambda=%.05f,\n" +
-                        "\tunprocessedDataShift=%.05f,\n" +
-                        ']',
+        return String.format("SigmoidParams{" +
+                        "priceLambda=%.05f; " +
+                        "priceShift=%.05f; " +
+                        "loadOfResourceLambda=%.05f; " +
+                        "loadOfResourceShift=%.05f; " +
+                        "unprocessedDataLambda=%.05f; " +
+                        "unprocessedDataShift=%.05f" +
+                        '}',
                 priceLambda,
                 priceShift,
                 loadOfResourceLambda,

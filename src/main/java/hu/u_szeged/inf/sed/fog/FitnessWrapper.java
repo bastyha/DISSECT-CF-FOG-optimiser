@@ -28,25 +28,49 @@ public class FitnessWrapper implements Comparable<FitnessWrapper> {
         return this.fitness.compareTo(o.fitness);
     }
 
-    private static double normalizeSimLength(double simLength) {
-        return (simLength - 4_000.0) / (20_000.0 - 4_000.0);
+    private static double normalizeCost(double price) {
+        double priceMin = 2200.0;
+        double priceMax = 4500.0;
+        if (price > priceMax) {
+            System.err.println("Price is bigger than what we normalize with");
+        }
+        if (price < priceMin) {
+            System.err.println("Price is smaller than what we normalize with");
+        }
+        return (price - priceMin) / (priceMax - priceMin);
     }
 
     private static double normalizeEnergy(double energy) {
-        return (energy - 1.0) / (14.0 - 1.0);
+        double energyMin = 7.0;
+        double energyMax = 8.0;
+        if (energy > energyMax) {
+            System.err.println("Energy is bigger than what we normalize with");
+        }
+        if (energy < energyMin) {
+            System.err.println("Energy is smaller than what we normalize with");
+        }
+        return (energy - energyMin) / (energyMax - energyMin);
     }
 
-    private static double normalizeCost(double price) {
-        return (price - 600.0) / (2800.0 - 600.0);
+    private static double normalizeSimLength(double simLength) {
+        double simLengthMin = 12_000.0;
+        double simLengthMax = 23_000.0;
+        if (simLength > simLengthMax) {
+            System.err.println("Simulation length is bigger than what we normalize with");
+        }
+        if (simLength < simLengthMin) {
+            System.err.println("Simulation length is smaller than what we normalize with");
+        }
+        return (simLength - simLengthMin) / (simLengthMax - simLengthMin);
     }
 
     @Override
     public String toString() {
-        return String.format("FitnessWrapper{\n" +
-                        "\ttotalCost=%.05f,\n" +
-                        "\tenergy=%.05f,\n" +
-                        "\tsimLength=%.05f,\n" +
-                        "\tfitness=%.05f\n" +
+        return String.format("FitnessWrapper{" +
+                        "totalCost=%.05f; " +
+                        "energy=%.05f; " +
+                        "simLength=%.05f; " +
+                        "fitness=%.05f" +
                         '}',
                 totalCost,
                 energy,
