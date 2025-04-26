@@ -54,7 +54,7 @@ public class FitnessWrapper implements Comparable<FitnessWrapper> {
 
     private static double normalizeSimLength(double simLength) {
         double simLengthMin = 12_000.0;
-        double simLengthMax = 23_000.0;
+        double simLengthMax = 24_500.0;
         if (simLength > simLengthMax) {
             System.err.println("Simulation length is bigger than what we normalize with");
         }
