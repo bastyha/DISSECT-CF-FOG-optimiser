@@ -157,6 +157,7 @@ public class GeneticPliantOptimiser {
 //                .survivorsSelector(new EliteSelector<>(10))
 //                .offspringSelector(new TournamentSelector<>(4))
                 .selector(new LinearRankSelector<>())
+                .maximalPhenotypeAge(5)
                 .alterers(
                         new GaussianMutator<>(0.2),
                         new MeanAlterer<>(0.2)
@@ -183,10 +184,10 @@ public class GeneticPliantOptimiser {
         System.out.println("Best fitnesses over generations: " + fitnessBest);
         System.out.println("Mean fitnesses over generations: " + fitnessMean);
 
-        save_to_csv(fitnessBest, "linear_fitness_best");
-        save_to_csv(fitnessMean, "linear_fitness_mean");
+        save_to_csv(fitnessBest, "ttl_linear_fitness_best");
+        save_to_csv(fitnessMean, "ttl_linear_fitness_mean");
 
-        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "linear_res" + ".csv")) {
+        try (FileWriter fw = new FileWriter("src/main/resources/evo_res/" + "ttl_linear_res" + ".csv")) {
             fw.write(codec.decode(result.genotype()).toString());
             fw.append("\n");
             fw.append(result.fitness().toString()).append("\n");
