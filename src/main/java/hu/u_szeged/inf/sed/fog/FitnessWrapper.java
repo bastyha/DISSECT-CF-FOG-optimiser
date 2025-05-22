@@ -1,6 +1,6 @@
 package hu.u_szeged.inf.sed.fog;
 
-public class FitnessWrapper implements Comparable<FitnessWrapper> {
+public class FitnessWrapper extends Number implements Comparable<FitnessWrapper> {
     Double totalCost = 0.0;
     Double energy = 0.0;
     Double simLength = 0.0;
@@ -77,5 +77,25 @@ public class FitnessWrapper implements Comparable<FitnessWrapper> {
                 simLength,
                 fitness
         );
+    }
+
+    @Override
+    public int intValue() {
+        return fitness.intValue();
+    }
+
+    @Override
+    public long longValue() {
+        return fitness.longValue();
+    }
+
+    @Override
+    public float floatValue() {
+        return fitness.floatValue();
+    }
+
+    @Override
+    public double doubleValue() {
+        return fitness.doubleValue();
     }
 }
